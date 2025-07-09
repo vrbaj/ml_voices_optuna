@@ -12,6 +12,12 @@ class CustomSMOTE(BaseSampler, SamplerMixin):
     """Class that implements KMeansSMOTE oversampling. Due to initialization of KMeans
     there are 10 tries to resample the dataset. Then standard SMOTE is applied.
     """
+    _parameter_constraints: dict = {
+        "per_sex": [bool],
+        "random_state": [int, type(None)],
+        "kmeans_args": [dict, type(None)],
+        "smote_args": [dict, type(None)],
+    }
     _sampling_type = "over-sampling"
 
     def __init__(self, per_sex:bool = False, random_state=None, kmeans_args=None, smote_args=None):
@@ -70,3 +76,21 @@ class CustomSMOTE(BaseSampler, SamplerMixin):
         else:
             X_res, y_res = self.smote.fit_resample(X, y)
         return X_res, y_res
+
+    # def get_params(self, deep=True):
+    #     return {
+    #         "per_sex": self.per_sex,
+    #         "random_state": self.random_state,
+    #         "kmeans_args": self.kmeans_args,
+    #         "smote_args": self.smote_args
+    #     }
+    #
+    # def set_params(self, **params):
+    #     for param, value in params.items():
+    #         setattr(self, param, value)
+    #     if self.random_state is not None:
+    #         self.kmeans_args["random_state"] = self.random_state
+    #         self.smote_args["random_state"] = self.random_state
+    #     self.kmeans_smote = KMeansSMOTE(**self.kmeans_args)
+    #     self.smote = SMOTE(**self.smote_args)
+    #     return self

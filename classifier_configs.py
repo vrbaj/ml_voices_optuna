@@ -100,8 +100,8 @@ def get_classifier(classifier_name: str, both_sexes: bool = False, random_seed: 
             raise ValueError(f"Unknown classifier: {classifier_name}")
 
     pipe = Pipeline([
-        #("smote", CustomSMOTE(per_sex=both_sexes,random_state=random_seed)),
-        ("smote", SMOTE(random_state=random_seed)),
+        ("smote", CustomSMOTE(per_sex=both_sexes,random_state=random_seed)),
+        #("smote", SMOTE(random_state=random_seed)),
         ("minmaxscaler", MinMaxScaler()),
         classifier
     ])

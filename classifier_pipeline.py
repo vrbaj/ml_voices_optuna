@@ -86,7 +86,7 @@ def main(sex: str = "women", classifier="svm_poly", dataset_slice=None):
             return scores.mean()
 
         study = optuna.create_study(direction="maximize")
-        study.optimize(objective, n_trials=500)
+        study.optimize(objective, n_trials=100)
 
         best_params = study.best_trial.params
         best_score = study.best_value

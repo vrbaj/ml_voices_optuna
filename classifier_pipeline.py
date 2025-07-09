@@ -68,9 +68,10 @@ def main(sex: str = "women", classifier="svm_poly", dataset_slice=None):
             train_set = pickle.load(f)
         data_X = np.array(train_set["data"], dtype=np.float64)
         data_y = np.array(train_set["labels"])
-
+        trial_results = []
         def objective(trial):
             pipeline, param_grid = get_classifier(classifier, both_sexes=(sex == "both"), random_seed=RANDOM_SEED)
+            trial_params = {}
             for param_name, param_values in grids[classifier].items():
                 if all(isinstance(v, (int, float)) for v in param_values):
                     if all(isinstance(v, int) for v in param_values):
@@ -80,23 +81,25 @@ def main(sex: str = "women", classifier="svm_poly", dataset_slice=None):
                 else:
                     val = trial.suggest_categorical(param_name, param_values)
                 pipeline.set_params(**{param_name: val})
+                trial_params[param_name] = val
+
             scores = cross_val_score(pipeline, data_X, data_y,
-                                      cv=StratifiedKFold(n_splits=10, shuffle=True, random_state=RANDOM_SEED),
-                                      scoring=metric_to_optimize, n_jobs=-1)
-            return scores.mean()
+                                     cv=StratifiedKFold(n_splits=10, shuffle=True, random_state=RANDOM_SEED),
+                                     scoring=metric_to_optimize, n_jobs=-1)
+            trial_score = scores.mean()
+            trial_results.append({**trial_params, f"mean_test_{metric_to_optimize}": trial_score})
+            return trial_score
 
         study = optuna.create_study(direction="maximize")
-        study.optimize(objective, n_trials=100)
+        study.optimize(objective, n_trials=50)
 
-        best_params = study.best_trial.params
-        best_score = study.best_value
-
-        # Save results
         results_file.mkdir(exist_ok=True)
         header = not results_file.joinpath("results.csv").exists()
 
-        df_result = pd.DataFrame([{**best_params, f"mean_test_{metric_to_optimize}": best_score}])
-        df_result.to_csv(results_file.joinpath("results.csv"), index=False, mode="a", header=header, encoding="utf8", lineterminator="\n")
+        df_result = pd.DataFrame(trial_results)
+        df_result.to_csv(results_file.joinpath("results.csv"), index=False, mode="a", header=header, encoding="utf8",
+                         lineterminator="\n")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
